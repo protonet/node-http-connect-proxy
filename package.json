@@ -1,0 +1,17 @@
+{
+  "author": "Protonet Team <team@protonet.info> (http://protonet.info/)",
+  "name": "node-proxy",
+  "description": "A dynamic HTTP CONNECT proxy designed for Protonet",
+  "version": "0.0.1",
+  "homepage": "http://github.com/protonet/node-http-connect-proxy",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/protonet/node-http-connect-proxy.git"
+  },
+  "main": ".",
+  "engines": {
+    "node": "~0.6.5"
+  },
+  "dependencies": {"mongodb":"0.9.7-2-5"},
+  "devDependencies": {}
+}
