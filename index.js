@@ -22,29 +22,32 @@ var server = net.createServer(function (socket) {
     buffer += data.toString();
     
     if (buffer.indexOf("\r\n\r\n") > 0) {
+      socket.removeListener('data', handler);
+      
       var captures = buffer.match(/^CONNECT ([^:]+):([0-9]+) (HTTP\/1\.[01])/);
       
       if (!captures || captures.length < 2) {
+        console.log('Received invalid HTTP request');
         return send_response(400, 'Bad Request', true);
       }
+      
+      console.log('Client requested a tunnel to ' + captures[1] + ' port ' + captures[2]);
       
       http_version = captures[3];
       
       lookup(captures[1], function(port) {
       
-        if (!port) {
-          return send_response(401, 'Unknown Proxy Target', true);
-        }
+        if (!port) { return send_response(401, 'Unknown Proxy Target', true); }
         
         var remote = tunnel(TUNNEL_HOST, port, 'localhost:' + captures[2], function(data) {
           console.log('Connected to upstream service, initiating tunnel pumping');
           
+          socket.addListener('data', function(data) { remote.write(data); });
+          remote.addListener('data', function(data) { socket.write(data); });
+          
           send_response(200, 'Connection Established');
 
           if (data.length > 0) { socket.write(data); }
-          
-          socket.addListener('data', function(data) { remote.write(data); });
-          remote.addListener('data', function(data) { socket.write(data); });
         });
       });
     }

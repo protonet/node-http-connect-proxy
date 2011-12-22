@@ -1,10 +1,11 @@
 var net = require('net');
 
 exports.open = function(host, port, target, callback) {
-  console.log('Starting a connection to ' + target + ' via ' + host + ':' + port);
+  console.log('Connecting to ' + host + ':' + port);
   
   var proxy = new net.Socket();
   proxy.connect(port, host, function() {
+    console.log('Tunneling to ' + target + ' through ' + host + ':' + port);
     proxy.write('CONNECT ' + target + " HTTP/1.0\r\n\r\n");
   });
   
@@ -23,7 +24,7 @@ exports.open = function(host, port, target, callback) {
       
       buffer = buffer.slice(buffer.indexOf("\r\n\r\n") + 4);
       
-      console.log('Proxy connected, handing back');
+      console.log('Tunnel connected, handing socket back');
       
       proxy.removeListener('data', handler);
       
