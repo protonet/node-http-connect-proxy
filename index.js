@@ -1,7 +1,7 @@
 var net  = require('net'),
-    util = require('util'),
     
     lookup = require('./lookup').lookup,
+    tunnel = require('./tunnel').open,
     
     TUNNEL_HOST = '127.0.0.1',
     HEADERS = "Proxy-agent: protonet-proxy/0.0.1\r\n";
@@ -22,13 +22,13 @@ var server = net.createServer(function (socket) {
     buffer += data.toString();
     
     if (buffer.indexOf("\r\n\r\n") > 0) {
-      var captures = buffer.match(/^CONNECT ([^ ]+) (HTTP\/1\.[01])/);
+      var captures = buffer.match(/^CONNECT ([^:]+):([0-9]+) (HTTP\/1\.[01])/);
       
       if (!captures || captures.length < 2) {
         return send_response(400, 'Bad Request', true);
       }
       
-      http_version = captures[2];
+      http_version = captures[3];
       
       lookup(captures[1], function(port) {
       
@@ -36,17 +36,13 @@ var server = net.createServer(function (socket) {
           return send_response(401, 'Unknown Proxy Target', true);
         }
         
-        console.log('Starting a connection to ' + TUNNEL_HOST + ':' + port);
-        
-        var remote = new net.Socket();
-        remote.connect(port, TUNNEL_HOST, function() {
-        
-          console.log('Connected, initiating tunnel pumping');
-          
-          socket.removeListener('data', handler);
+        var remote = tunnel(TUNNEL_HOST, port, 'localhost:' + captures[2], function(data) {
+          console.log('Connected to upstream service, initiating tunnel pumping');
           
           send_response(200, 'Connection Established');
 
+          if (data.length > 0) { socket.write(data); }
+          
           socket.addListener('data', function(data) { remote.write(data); });
           remote.addListener('data', function(data) { socket.write(data); });
         });
@@ -59,5 +55,5 @@ var server = net.createServer(function (socket) {
 
 server.listen(8022);
 
-console.log('Server running at http://0.0.0.0:8022/');
+console.log('Proxy server running at http://0.0.0.0:8022/');
 
