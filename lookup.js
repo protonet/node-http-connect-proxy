@@ -12,14 +12,14 @@ exports.lookup = function(name, callback) {
   
   // Fetch the collection publications
   db.collection('publications', function(err, collection) {
-    if (err) throw err;
+    if (err) return callback(null);
     
     // Locate specific document by key
     collection.find({'node_name': name}, function(err, cursor) {
-      if (err) throw err;
+      if (err) return callback(null);
   
       cursor.nextObject(function(err, doc) {
-        if (err) throw err;
+        if (err) return callback(null);
               
         console.log('callback called', doc);
         callback(doc ? doc.port : null);

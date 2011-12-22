@@ -1,10 +1,21 @@
 var net  = require('net'),
     util = require('util'),
     
-    lookup = require('./lookup').lookup;
+    lookup = require('./lookup').lookup,
+    
+    TUNNEL_HOST = '127.0.0.1',
+    HEADERS = "Proxy-agent: protonet-proxy/0.0.1\r\n";
 
 var server = net.createServer(function (socket) {
-  var buffer = '';
+  var buffer = '',
+      http_version = 'HTTP/1.0';
+  
+  send_response = function(numeric, text, close) {
+    socket.write(http_version + ' ' + numeric + ' ' + text + "\r\n");
+    socket.write(HEADERS + "\r\n");
+    
+    if (close) socket.end();
+  }
   
   // define it here so it can be unassigned
   var handler = function(data) {
@@ -14,31 +25,27 @@ var server = net.createServer(function (socket) {
       var captures = buffer.match(/^CONNECT ([^ ]+) (HTTP\/1\.[01])/);
       
       if (!captures || captures.length < 2) {
-        socket.write(captures[2] + " 400 Bad Request\r\n");
-        socket.write("Proxy-agent: protonet-proxy/0.0.1\r\n\r\n");
-        socket.end();
+        return send_response(400, 'Bad Request', true);
       }
+      
+      http_version = captures[2];
       
       lookup(captures[1], function(port) {
       
         if (!port) {
-          socket.write(captures[2] + " 401 Unknown Proxy Target\r\n");
-          socket.write("Proxy-agent: protonet-proxy/0.0.1\r\n\r\n");
-          socket.end();
-          return;
+          return send_response(401, 'Unknown Proxy Target', true);
         }
         
-        console.log('Starting a connection to 127.0.0.1:' + port);
+        console.log('Starting a connection to ' + TUNNEL_HOST + ':' + port);
         
         var remote = new net.Socket();
-        remote.connect(port, '127.0.0.1', function() {
+        remote.connect(port, TUNNEL_HOST, function() {
         
-          console.log('Connected, initiating pumping');
+          console.log('Connected, initiating tunnel pumping');
           
           socket.removeListener('data', handler);
           
-          socket.write(captures[2] + " 200 Connection Established\r\n");
-          socket.write("Proxy-agent: protonet-proxy/0.0.1\r\n\r\n");
+          send_response(200, 'Connection Established');
 
           socket.addListener('data', function(data) { remote.write(data); });
           remote.addListener('data', function(data) { socket.write(data); });
