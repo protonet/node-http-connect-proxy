@@ -1,56 +1,53 @@
 var net  = require('net'),
-    util = require('util');
-
-// dynamic just 'cause
-function lookupHost(host) {
-  if (host == 'foobar')
-    return ['team.protonet.info', 22];
-
-  return null;
-}
+    util = require('util'),
+    
+    lookup = require('./lookup').lookup;
 
 var server = net.createServer(function (socket) {
   var buffer = '';
   
+  // define it here so it can be unassigned
   var handler = function(data) {
     buffer += data.toString();
     
     if (buffer.indexOf("\r\n\r\n") > 0) {
       var captures = buffer.match(/^CONNECT ([^ ]+) (HTTP\/1\.[01])/);
-      var hostname = captures[1];
-      var pair = lookupHost(hostname);
       
-      if (!pair) {
-        socket.write(captures[2] + " 401 Unknown Target\r\n");
+      if (!captures || captures.length < 2) {
+        socket.write(captures[2] + " 400 Bad Request\r\n");
         socket.write("Proxy-agent: protonet-proxy/0.0.1\r\n\r\n");
         socket.end();
-        return;
       }
       
-      console.log('Starting a connection to ' + pair[0]);
+      lookup(captures[1], function(port) {
       
-      var remote = new net.Socket();
-      remote.connect(pair[1], pair[0], function() {
-      
-        console.log('Connected, initiating pumping');
+        if (!port) {
+          socket.write(captures[2] + " 401 Unknown Proxy Target\r\n");
+          socket.write("Proxy-agent: protonet-proxy/0.0.1\r\n\r\n");
+          socket.end();
+          return;
+        }
         
-        socket.removeListener('data', handler);
+        console.log('Starting a connection to 127.0.0.1:' + port);
         
-        socket.write(captures[2] + " 200 Connection Established\r\n");
-        socket.write("Proxy-agent: protonet-proxy/0.0.1\r\n\r\n");
+        var remote = new net.Socket();
+        remote.connect(port, '127.0.0.1', function() {
+        
+          console.log('Connected, initiating pumping');
+          
+          socket.removeListener('data', handler);
+          
+          socket.write(captures[2] + " 200 Connection Established\r\n");
+          socket.write("Proxy-agent: protonet-proxy/0.0.1\r\n\r\n");
 
-        
-        //util.pump(socket, remote);
-        //util.pump(remote, socket);
-        
-        socket.addListener('data', function(data) { remote.write(data); });
-        remote.addListener('data', function(data) { socket.write(data); });
+          socket.addListener('data', function(data) { remote.write(data); });
+          remote.addListener('data', function(data) { socket.write(data); });
+        });
       });
     }
   }
   
   socket.addListener('data', handler);
-  
 });
 
 server.listen(8022);
