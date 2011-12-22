@@ -4,7 +4,7 @@ var net  = require('net'),
 // dynamic just 'cause
 function lookupHost(host) {
   if (host == 'foobar')
-    return ['team.protonet.info', 22666];
+    return ['team.protonet.info', 22];
 
   return null;
 }
