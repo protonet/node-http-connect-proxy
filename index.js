@@ -11,10 +11,15 @@ var server = net.createServer(function (socket) {
       http_version = 'HTTP/1.0';
   
   send_response = function(numeric, text, close) {
+    console.log('Sending HTTP ' + numeric + ' ' + text + ' response');
+    
     socket.write(http_version + ' ' + numeric + ' ' + text + "\r\n");
     socket.write(HEADERS + "\r\n");
     
-    if (close) socket.end();
+    if (close) {
+      console.log('Disconnecting client');
+      socket.end();
+    }
   }
   
   // define it here so it can be unassigned
@@ -36,6 +41,7 @@ var server = net.createServer(function (socket) {
       http_version = captures[3];
       
       lookup(captures[1], function(port) {
+        console.log('Remote port is ' + port);
       
         if (!port) { return send_response(401, 'Unknown Proxy Target', true); }
         
@@ -43,6 +49,7 @@ var server = net.createServer(function (socket) {
           console.log('Connected to upstream service, initiating tunnel pumping');
           
           var closeBoth = function() {
+            console.log('Disconnecting tunnel');
             try { socket.end(); } catch(ex) {}
             try { remote.end(); } catch(ex) {}
           }
@@ -50,7 +57,10 @@ var server = net.createServer(function (socket) {
           var tunnel = function(other) {
             return function(data) {
               try { other.write(data); }
-              catch(ex) { closeBoth(); }
+              catch(ex) {
+                console.log('Error during socket write');
+                closeBoth();
+              }
             }
           };
           
