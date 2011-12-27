@@ -20,8 +20,7 @@ exports.lookup = function(name, callback) {
   
       cursor.nextObject(function(err, doc) {
         if (err) return callback(null);
-              
-        console.log('callback called', doc);
+        
         callback(doc ? doc.port : null);
       });
     });

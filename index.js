@@ -42,8 +42,23 @@ var server = net.createServer(function (socket) {
         var remote = tunnel(TUNNEL_HOST, port, 'localhost:' + captures[2], function(data) {
           console.log('Connected to upstream service, initiating tunnel pumping');
           
-          socket.addListener('data', function(data) { remote.write(data); });
-          remote.addListener('data', function(data) { socket.write(data); });
+          var closeBoth = function() {
+            try { socket.end(); } catch(ex) {}
+            try { remote.end(); } catch(ex) {}
+          }
+          
+          var tunnel = function(other) {
+            return function(data) {
+              try { other.write(data); }
+              catch(ex) { closeBoth(); }
+            }
+          };
+          
+          socket.addListener('data', tunnel(remote));
+          remote.addListener('data', tunnel(socket));
+          
+          socket.addListener('close', closeBoth);
+          remote.addListener('close', closeBoth);
           
           send_response(200, 'Connection Established');
 

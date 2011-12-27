@@ -15,7 +15,6 @@ exports.open = function(host, port, target, callback) {
     buffer += data.toString();
     
     if (buffer.indexOf("\r\n\r\n") > 0) {
-      console.log(buffer);
       var captures = buffer.match(/([0-9]{3}) (.+)/);
       
       if (!captures || captures.length < 2 || captures[1] != '200') {
