@@ -6,6 +6,11 @@ var net  = require('net'),
     TUNNEL_HOST = '127.0.0.1',
     HEADERS = "Proxy-agent: protonet-proxy/0.0.1\r\n";
 
+process.on('uncaughtException',function(error){
+// process error
+  console.log(error);
+});
+
 var server = net.createServer(function (socket) {
   var buffer = '',
       http_version = 'HTTP/1.0';
@@ -50,7 +55,7 @@ var server = net.createServer(function (socket) {
         if (!port) { return send_response(401, 'Unknown Proxy Target', true); }
 
         var remote = tunnel(TUNNEL_HOST, port, 'localhost:' + captures[2], function(data) {
-          if (data == null) { return send_response(500, 'Remote node refused tunnel', true); }
+          if (data == null) { return send_response(500, 'Remote node refused tunnel or does not respond', true); }
 
           console.log('Connected to upstream service, initiating tunnel pumping');
 
@@ -75,6 +80,9 @@ var server = net.createServer(function (socket) {
 
           socket.addListener('close', closeBoth);
           remote.addListener('close', closeBoth);
+
+          socket.addListener('error', closeBoth);
+          socket.addListener('error', closeBoth);
 
           send_response(200, 'Connection Established');
 

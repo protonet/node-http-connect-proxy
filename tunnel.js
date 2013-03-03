@@ -34,5 +34,8 @@ exports.open = function(host, port, target, callback) {
 
   proxy.addListener('data', handler);
 
+  proxy.addListener('error', function(){
+    return callback(null);
+  });
   return proxy;
 }
