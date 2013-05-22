@@ -2,6 +2,7 @@ var net  = require('net'),
 
     lookup = require('./lookup').lookup,
     tunnel = require('./tunnel').open,
+    trans = require('./transparent').open,
 
     TUNNEL_HOST = '127.0.0.1',
     HEADERS = "Proxy-agent: protonet-proxy/0.0.1\r\n";
@@ -45,16 +46,21 @@ var server = net.createServer(function (socket) {
         return send_response(400, 'Bad Request', true);
       }
 
-      console.log('Client requested a tunnel to ' + captures[1] + ' port ' + captures[2]);
+      var tmp = captures[1].split('~');
+      var target = tmp[0];
+      var old_style = tmp.length > 1;
+      console.log('Client requested a tunnel to ' + target + ' port ' + captures[2]);
+      if (old_style) console.log('Using the old HTTP CONNECT method');
 
       http_version = captures[3];
 
-      lookup(captures[1], function(port) {
+      lookup(target, function(port) {
         console.log('Remote port is ' + port);
 
         if (!port) { return send_response(401, 'Unknown Proxy Target', true); }
 
-        var remote = tunnel(TUNNEL_HOST, port, 'localhost:' + captures[2], function(data) {
+        var method = old_style ? tunnel : trans;
+        var remote = method(TUNNEL_HOST, port, 'localhost:' + captures[2], function(data) {
           if (data == null) { return send_response(500, 'Remote node refused tunnel or does not respond', true); }
 
           console.log('Connected to upstream service, initiating tunnel pumping');
