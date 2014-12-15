@@ -1,6 +1,6 @@
 var mongodb = require('./node_modules/mongodb/lib/mongodb');
 
-var server = new mongodb.Server("127.0.0.1", 27017, {});
+var server = new mongodb.Server("10.11.254.10", 27017, {});
 var db = new mongodb.Db('protonet_directory_padrino_production', server, {});
 
 db.open(function(err, db) {
