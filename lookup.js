@@ -6,7 +6,7 @@ exports.lookup = function(name, callback) {
   name += '.protonet.info';
 
 
-  http.get(endpoint + '?node_name=' + node_name, function(response) {
+  http.get(endpoint + '?node_name=' + name, function(response) {
     response.setEncoding('utf8');
 
     // response.data buffer
