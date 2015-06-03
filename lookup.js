@@ -3,6 +3,7 @@ var http = require('http');
 var endpoint = "http://directory.protonet.info/resolve_to_port";
 
 exports.lookup = function(name, callback) {
+  console.log("lookup node_name", name);
   name += '.protonet.info';
 
 
