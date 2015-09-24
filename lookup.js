@@ -1,28 +1,34 @@
-var mongodb = require('./node_modules/mongodb/lib/mongodb');
+var http = require('http');
 
-var server = new mongodb.Server("127.0.0.1", 27017, {});
-var db = new mongodb.Db('protonet_directory_padrino_production', server, {});
-
-db.open(function(err, db) {
-  if (err) throw err;
-});
+var endpoint = "http://directory.protonet.info/resolve_to_port";
 
 exports.lookup = function(name, callback) {
+  console.log("lookup node_name", name);
   name += '.protonet.info';
-  
-  // Fetch the collection publications
-  db.collection('publications', function(err, collection) {
-    if (err) return callback(null);
-    
-    // Locate specific document by key
-    collection.find({'node_name': name}, function(err, cursor) {
-      if (err) return callback(null);
-  
-      cursor.nextObject(function(err, doc) {
-        if (err) return callback(null);
-        
-        callback(doc ? doc.port : null);
-      });
+
+
+  http.get(endpoint + '?node_name=' + name, function(response) {
+    response.setEncoding('utf8');
+
+    // response.data buffer
+    var chunks = [];
+
+    //another chunk of data has been recieved, so append it to `str`
+    response.on('data', function (chunk) {
+      chunks.push(chunk);
     });
+
+    //the whole response has been recieved, so we just print it out here
+    response.on('end', function () {
+      if (response.statusCode === 200) {
+        doc = JSON.parse(chunks.join(''));
+        callback(doc.port);
+      }
+      else {
+        console.log("Recived error: " + chunks[0]);
+      }
+    });
+  }).on('error', function(e) {
+    console.log("Got error: " + e.message);
   });
-}
+};
