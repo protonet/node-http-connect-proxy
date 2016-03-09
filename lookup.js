@@ -1,9 +1,10 @@
-var http = require('http');
+var util = require('util');
+var http = require('follow-redirects').http
 
 var endpoint = "http://directory.protonet.info/resolve_to_port";
 
 exports.lookup = function(name, callback) {
-  console.log("lookup node_name", name);
+  util.log("lookup node_name", name);
   name += '.protonet.info';
 
 
@@ -25,10 +26,10 @@ exports.lookup = function(name, callback) {
         callback(doc.port);
       }
       else {
-        console.log("Recived error: " + chunks[0]);
+        util.log("Recived error: " + chunks[0]);
       }
     });
   }).on('error', function(e) {
-    console.log("Got error: " + e.message);
+    util.log("Got error: " + e.message);
   });
 };

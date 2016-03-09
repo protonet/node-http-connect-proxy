@@ -36,10 +36,10 @@ Setup
 -----
 As this is not packaged for or released on npm [yet], you'll have to use
 `git clone git@github.com:protonet/node-http-connect-proxy.git` (like
-a caveman) and run `npm install mongodb` from within the clone.
+a caveman) and run `npm install follow-redirects` from within the clone.
 
-To run the server, simply run `node node-http-connect-proxy` from outside the
-folder or `node .` from within.
+To run the Server simply start nodessh via the forever service 'nodessh'
+`service nodessh start`
 
 Client SSH Config
 -----------------
