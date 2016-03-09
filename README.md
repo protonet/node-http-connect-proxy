@@ -67,6 +67,6 @@ you want to use Node.JS to host a HTTP `CONNECT` proxy server.
 
 License
 -------
-Copyright © Protonet 2011
+Copyright © Protonet Betriebs GmbH 2016
 
 Licensed under the [MIT License](http://www.opensource.org/licenses/mit-license.php)
