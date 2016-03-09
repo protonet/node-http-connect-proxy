@@ -1,3 +1,5 @@
+var util = require('util');
+
 var net  = require('net'),
 
     lookup = require('./lookup').lookup,
@@ -9,7 +11,7 @@ var net  = require('net'),
 
 process.on('uncaughtException',function(error){
 // process error
-  console.log(error);
+  util.log(error);
 });
 
 var server = net.createServer(function (socket) {
@@ -17,18 +19,18 @@ var server = net.createServer(function (socket) {
       http_version = 'HTTP/1.0';
 
   send_response = function(numeric, text, close) {
-    console.log('Sending HTTP ' + numeric + ' ' + text + ' response');
+    util.log('Sending HTTP ' + numeric + ' ' + text + ' response');
 
     try {
       socket.write(http_version + ' ' + numeric + ' ' + text + "\r\n");
       socket.write(HEADERS + "\r\n");
 
       if (close) {
-        console.log('Disconnecting client');
+        util.log('Disconnecting client');
         socket.end();
       }
     } catch(ex) {
-      console.log('Error occurred while sending HTTP response');
+      util.log('Error occurred while sending HTTP response');
     }
   }
 
@@ -42,20 +44,20 @@ var server = net.createServer(function (socket) {
       var captures = buffer.match(/^CONNECT ([^:]+):([0-9]+) (HTTP\/1\.[01])/);
 
       if (!captures || captures.length < 2) {
-        console.log('Received invalid HTTP request');
+        util.log('Received invalid HTTP request');
         return send_response(400, 'Bad Request', true);
       }
 
       var tmp = captures[1].split('~');
       var target = tmp[0];
       var old_style = tmp.length > 1;
-      console.log('Client requested a tunnel to ' + target + ' port ' + captures[2]);
-      if (old_style) console.log('Using the old HTTP CONNECT method');
+      util.log('Client requested a tunnel to ' + target + ' port ' + captures[2]);
+      if (old_style) util.log('Using the old HTTP CONNECT method');
 
       http_version = captures[3];
 
       lookup(target, function(port) {
-        console.log('Remote port is ' + port);
+        util.log('Remote port is ' + port);
 
         if (!port) { return send_response(401, 'Unknown Proxy Target', true); }
 
@@ -63,10 +65,10 @@ var server = net.createServer(function (socket) {
         var remote = method(TUNNEL_HOST, port, 'localhost:' + captures[2], function(data) {
           if (data == null) { return send_response(500, 'Remote node refused tunnel or does not respond', true); }
 
-          console.log('Connected to upstream service, initiating tunnel pumping');
+          util.log('Connected to upstream service, initiating tunnel pumping');
 
           var closeBoth = function() {
-            console.log('Disconnecting tunnel');
+            util.log('Disconnecting tunnel');
             try { socket.end(); } catch(ex) {}
             try { remote.end(); } catch(ex) {}
           }
@@ -75,7 +77,7 @@ var server = net.createServer(function (socket) {
             return function(data) {
               try { other.write(data); }
               catch(ex) {
-                console.log('Error during socket write');
+                util.log('Error during socket write');
                 closeBoth();
               }
             }
@@ -105,5 +107,5 @@ var server = net.createServer(function (socket) {
 
 server.listen(8022);
 
-console.log('Proxy server running at http://0.0.0.0:8022/');
+util.log('Proxy server running at http://0.0.0.0:8022/');
 
